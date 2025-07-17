@@ -1,0 +1,99 @@
+/* Additional App-specific styles */
+.week-card h3 {
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.week-card .progress-bar {
+  margin: 15px 0;
+}
+
+.week-card .progress-bar + p {
+  margin-bottom: 15px;
+}
+
+/* Responsive adjustments for very small screens */
+@media (max-width: 480px) {
+  .week-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-overview {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .week-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .week-phase {
+    align-self: flex-start;
+  }
+}
+
+/* Animation for completed weeks */
+.week-card.completed {
+  animation: fadeInGreen 0.5s ease-in-out;
+}
+
+@keyframes fadeInGreen {
+  0% {
+    background: white;
+  }
+  100% {
+    background: linear-gradient(135deg, #f8fff9 0%, #e8f5e8 100%);
+  }
+}
+
+/* Hover effects for day items */
+.day-item:not(.other-week):hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Today indicator animation */
+.day-item.today {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+  }
+}
+
+.week-card.past {
+  opacity: 0.7;
+  background: #f4f4f4;
+  border-left-color: #adb5bd;
+}
+
+.week-card.current {
+  border-left-color: #007bff;
+  box-shadow: 0 0 0 2px #007bff33;
+  background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%);
+}
+
+.week-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 8px;
+}
+.week-badge.current {
+  background: #007bff;
+  color: #fff;
+}
+.week-badge.past {
+  background: #adb5bd;
+  color: #fff;
+}
