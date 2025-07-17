@@ -159,19 +159,29 @@ code {
   gap: 10px;
 }
 
-.week-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #333;
+.week-header > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.week-phase {
-  background: #667eea;
-  color: white;
+.week-phase,
+.week-badge {
+  display: inline-block;
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 0.875rem;
   font-weight: 500;
+}
+
+.week-badge {
+  margin-left: 0;
+}
+
+.week-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
 }
 
 .week-phase.base {

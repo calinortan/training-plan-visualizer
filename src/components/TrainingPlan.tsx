@@ -1,8 +1,18 @@
 import React from "react";
 import { isBefore, isAfter, toDateSafe } from "../utils/date";
-import WeekCard from "./WeekCard";
+import WeekCard, { Week } from "./WeekCard";
 
-export default function TrainingPlan({
+type TrainingPlanProps = {
+  trainingPlan: Week[];
+  getWeekProgress: (week: Week, mileageObj?: Record<number, string>) => number;
+  getDaysInWeek: (startDate: Date | string, endDate?: Date | string) => Date[];
+  completedEvents: Record<string, boolean>;
+  toggleEventCompletion: (eventKey: string) => void;
+  actualMileage: Record<number, string>;
+  onMileageChange: (weekNumber: number, value: string) => void;
+};
+
+const TrainingPlan: React.FC<TrainingPlanProps> = ({
   trainingPlan,
   getWeekProgress,
   getDaysInWeek,
@@ -10,7 +20,7 @@ export default function TrainingPlan({
   toggleEventCompletion,
   actualMileage,
   onMileageChange,
-}) {
+}) => {
   const today = new Date();
   return (
     <>
@@ -47,4 +57,6 @@ export default function TrainingPlan({
       })}
     </>
   );
-}
+};
+
+export default TrainingPlan;

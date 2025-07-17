@@ -6,30 +6,31 @@ import { toDateSafe, getDaysInWeek, format } from "./utils/date";
 import UploadArea from "./components/UploadArea";
 import StatsOverview from "./components/StatsOverview";
 import TrainingPlan from "./components/TrainingPlan";
+import type { Week } from "./components/WeekCard";
 
-function App() {
-  const [trainingPlan, setTrainingPlan] = useLocalStorage("trainingPlan", null);
-  const [completedEvents, setCompletedEvents] = useLocalStorage(
-    "completedEvents",
-    {}
+const App: React.FC = () => {
+  const [trainingPlan, setTrainingPlan] = useLocalStorage<Week[] | null>(
+    "trainingPlan",
+    null
   );
-  const [actualMileage, setActualMileage] = useLocalStorage(
-    "actualMileage",
-    {}
-  );
+  const [completedEvents, setCompletedEvents] = useLocalStorage<
+    Record<string, boolean>
+  >("completedEvents", {});
+  const [actualMileage, setActualMileage] = useLocalStorage<
+    Record<number, string>
+  >("actualMileage", {});
   const [isDragging, setIsDragging] = useState(false);
 
-  const handleFileUpload = (file) => {
+  const handleFileUpload = (file: File) => {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => {
+      complete: (results: Papa.ParseResult<any>) => {
         if (results.errors.length > 0) {
           alert("Error parsing CSV file. Please check the format.");
           console.error("PapaParse errors:", results.errors);
           return;
         }
-        // Check for required columns
         const requiredColumns = [
           "Week",
           "Phase",
@@ -45,41 +46,44 @@ function App() {
           alert("Missing required columns: " + missing.join(", "));
           return;
         }
-        const parsedPlan = results.data.map((row, index) => ({
-          ...row,
-          weekNumber: parseInt(row.Week) || index + 1,
-          startDate: toDateSafe(row.Start),
-          longRunKm: parseFloat(row["Long Run (km)"]) || 0,
-          weeklyMileage: parseFloat(row["Weekly Mileage (km)"]) || 0,
-        }));
+        const parsedPlan: Week[] = results.data.map(
+          (row: any, index: number) => ({
+            ...row,
+            weekNumber: parseInt(row.Week) || index + 1,
+            startDate: toDateSafe(row.Start),
+            longRunKm: parseFloat(row["Long Run (km)"]) || 0,
+            weeklyMileage: parseFloat(row["Weekly Mileage (km)"]) || 0,
+          })
+        );
         setTrainingPlan(parsedPlan);
         setCompletedEvents({});
+        setActualMileage({});
       },
-      error: (error) => {
+      error: (error: any) => {
         alert("Error reading file: " + error.message);
         console.error("PapaParse error:", error);
       },
     });
   };
 
-  const handleFileInput = (event) => {
-    const file = event.target.files[0];
+  const handleFileInput = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
       handleFileUpload(file);
     }
   };
 
-  const handleDragOver = (event) => {
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragging(true);
   };
 
-  const handleDragLeave = (event) => {
+  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragging(false);
   };
 
-  const handleDrop = (event) => {
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragging(false);
     const files = event.dataTransfer.files;
@@ -88,14 +92,17 @@ function App() {
     }
   };
 
-  const toggleEventCompletion = (eventKey) => {
+  const toggleEventCompletion = (eventKey: string) => {
     setCompletedEvents((prev) => ({
       ...prev,
       [eventKey]: !prev[eventKey],
     }));
   };
 
-  const getWeekProgress = (week, mileageObj = actualMileage) => {
+  const getWeekProgress = (
+    week: Week,
+    mileageObj: Record<number, string> = actualMileage
+  ): number => {
     const keyWorkoutKey = `week${week.weekNumber}-keyworkout`;
     const longRunKey = `week${week.weekNumber}-longrun`;
     const mileageKey = `week${week.weekNumber}-mileage`;
@@ -110,7 +117,7 @@ function App() {
     return (completedCount / 3) * 100;
   };
 
-  const getOverallProgress = () => {
+  const getOverallProgress = (): number => {
     if (!trainingPlan) return 0;
     const totalEvents = trainingPlan.length * 3;
     let completedCount = 0;
@@ -128,20 +135,11 @@ function App() {
     return (completedCount / totalEvents) * 100;
   };
 
-  const onMileageChange = (weekNumber, value) => {
-    setActualMileage((prev) => ({ ...prev, [weekNumber]: value }));
-  };
-
   const getTotalWeeks = () => trainingPlan?.length || 0;
   const getCompletedWeeks = () => {
     if (!trainingPlan) return 0;
     return trainingPlan.filter((week) => getWeekProgress(week) === 100).length;
   };
-  const getTotalEvents = () => (trainingPlan ? trainingPlan.length * 3 : 0);
-  const getCompletedEvents = () =>
-    Object.keys(completedEvents).filter((key) => completedEvents[key]).length;
-
-  // Calculate total and completed mileage
   const totalMileage = trainingPlan
     ? trainingPlan.reduce(
         (sum, week) => sum + Number(week.weeklyMileage || 0),
@@ -163,9 +161,15 @@ function App() {
     ) {
       setTrainingPlan(null);
       setCompletedEvents({});
+      setActualMileage({});
       window.localStorage.removeItem("trainingPlan");
       window.localStorage.removeItem("completedEvents");
+      window.localStorage.removeItem("actualMileage");
     }
+  };
+
+  const onMileageChange = (weekNumber: number, value: string) => {
+    setActualMileage((prev) => ({ ...prev, [weekNumber]: value }));
   };
 
   if (!trainingPlan) {
@@ -230,6 +234,6 @@ function App() {
       />
     </div>
   );
-}
+};
 
 export default App;

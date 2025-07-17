@@ -1,7 +1,30 @@
 import React from "react";
 import { format } from "../utils/date";
 
-export default function WeekCard({
+export type Week = {
+  weekNumber: number;
+  Phase: string;
+  startDate: Date | string;
+  longRunKm: number;
+  weeklyMileage: number;
+  "Key Workout": string;
+  "Long Run Pace": string;
+};
+
+type WeekCardProps = {
+  week: Week;
+  weekProgress: number;
+  weekStatus: string;
+  isCompleted: boolean;
+  weekStart: Date | null;
+  weekEnd: Date | null;
+  completedEvents: Record<string, boolean>;
+  toggleEventCompletion: (eventKey: string) => void;
+  actualMileage: Record<number, string>;
+  onMileageChange: (weekNumber: number, value: string) => void;
+};
+
+const WeekCard: React.FC<WeekCardProps> = ({
   week,
   weekProgress,
   weekStatus,
@@ -12,7 +35,7 @@ export default function WeekCard({
   toggleEventCompletion,
   actualMileage,
   onMileageChange,
-}) {
+}) => {
   // Unique keys for this week's events
   const keyWorkoutKey = `week${week.weekNumber}-keyworkout`;
   const longRunKey = `week${week.weekNumber}-longrun`;
@@ -148,4 +171,6 @@ export default function WeekCard({
       </div>
     </div>
   );
-}
+};
+
+export default WeekCard;

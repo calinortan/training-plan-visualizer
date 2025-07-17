@@ -1,11 +1,18 @@
 import React from "react";
 
-export default function StatsOverview({
+type StatsOverviewProps = {
+  totalWeeks: number;
+  completedWeeks: number;
+  totalMileage: number;
+  completedMileage: number;
+};
+
+const StatsOverview: React.FC<StatsOverviewProps> = ({
   totalWeeks,
   completedWeeks,
   totalMileage,
   completedMileage,
-}) {
+}) => {
   const progress = totalMileage > 0 ? completedMileage / totalMileage : 0;
   let completedBg = "#f8f9fa";
   let completedColor = "#333";
@@ -46,4 +53,6 @@ export default function StatsOverview({
       </div>
     </div>
   );
-}
+};
+
+export default StatsOverview;
