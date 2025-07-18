@@ -73,28 +73,6 @@ const WeekCard: React.FC<WeekCardProps> = ({
           )}
         </div>
       </div>
-      <div className="week-stats">
-        <div className="stat-item">
-          <div className="stat-label">Long Run</div>
-          <div className="stat-value">{week.longRunKm} km</div>
-        </div>
-        <div className="stat-item">
-          <div className="stat-label">Weekly Mileage</div>
-          <div className="stat-value">{week.weeklyMileage} km</div>
-        </div>
-        <div className="stat-item">
-          <div className="stat-label">Key Workout</div>
-          <div className="stat-value" style={{ fontSize: "0.9rem" }}>
-            {week["Key Workout"]}
-          </div>
-        </div>
-        <div className="stat-item">
-          <div className="stat-label">Long Run Pace</div>
-          <div className="stat-value" style={{ fontSize: "0.9rem" }}>
-            {week["Long Run Pace"]}
-          </div>
-        </div>
-      </div>
       <div className="progress-bar">
         <div
           className="progress-fill"

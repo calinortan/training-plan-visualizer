@@ -1,33 +1,33 @@
 # Training Plan Visualizer
 
-A React application for visualizing and tracking running training plans. Upload your CSV training plan and track your daily progress with a beautiful, mobile-responsive interface.
+A React + TypeScript application for visualizing and tracking running training plans. Upload your CSV training plan and track your weekly progress with a beautiful, mobile-responsive interface.
 
 ## Features
 
 - 📁 **CSV Upload**: Drag and drop or browse to upload your training plan CSV
 - 💾 **Local Storage**: All data is automatically saved to your browser's local storage
-- ✅ **Daily Tracking**: Mark individual days as completed with a simple click
+- ✅ **Weekly Tracking**: Mark key workouts, long runs, and enter your actual weekly mileage
 - 📊 **Progress Visualization**: See overall progress and weekly completion rates
 - 📱 **Mobile Responsive**: Optimized for both desktop and mobile devices
 - 🎨 **Beautiful UI**: Modern, clean interface with smooth animations
-- 📈 **Statistics Overview**: Track total weeks, completed weeks, total days, and completed days
+- 📈 **Statistics Overview**: Track total weeks, completed weeks, target mileage, and completed mileage
+- 🚀 **Easy GitHub Pages Deployment**: One-command deploy to your own public site
 
 ## CSV Format
 
 Your CSV file should have the following columns:
 
 ```csv
-Week,Phase,Start,End,Long Run (km),Key Workout,Weekly Mileage (km),Long Run Pace
-1,Base,2025-07-08,2025-07-14,14,Easy intervals,37,5:10–5:30/km
-2,Base,2025-07-15,2025-07-21,15,3x2k @ 4:20/km,39,5:10–5:30/km
+Week,Phase,Start,Long Run (km),Key Workout,Weekly Mileage (km),Long Run Pace
+1,Base,2025-07-14,14,Easy intervals,37,5:10–5:30/km
+2,Base,2025-07-21,15,3x2k @ 4:20/km,39,5:10–5:30/km
 ```
 
 ### Required Columns:
 
 - `Week`: Week number
 - `Phase`: Training phase (Base, Specific, Taper, Race week, etc.)
-- `Start`: Start date in YYYY-MM-DD format
-- `End`: End date in YYYY-MM-DD format
+- `Start`: Start date in YYYY-MM-DD format (should be a Monday for best results)
 - `Long Run (km)`: Distance of the long run in kilometers
 - `Key Workout`: Description of the main workout for the week
 - `Weekly Mileage (km)`: Total weekly distance in kilometers
@@ -37,7 +37,7 @@ Week,Phase,Start,End,Long Run (km),Key Workout,Weekly Mileage (km),Long Run Pace
 
 ### Prerequisites
 
-- Node.js (version 14 or higher)
+- Node.js (version 16 or higher)
 - npm or yarn
 
 ### Installation
@@ -53,10 +53,10 @@ npm install
 4. Start the development server:
 
 ```bash
-npm start
+npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser
+5. Open [http://localhost:5173](http://localhost:5173) in your browser
 
 ### Building for Production
 
@@ -64,7 +64,32 @@ npm start
 npm run build
 ```
 
-This creates a `build` folder with the production-ready application.
+This creates a `dist` folder with the production-ready application. **Note:** `dist/` is gitignored and should not be committed to your repository.
+
+## Deployment to GitHub Pages
+
+This project is pre-configured for easy deployment to GitHub Pages using the `gh-pages` package and Vite's static site output.
+
+### Steps:
+
+1. **Push your code to GitHub** (main branch)
+2. **Deploy:**
+
+   ```bash
+   npm run deploy
+   ```
+
+   This will build your app and publish the `dist/` folder to the `gh-pages` branch.
+
+3. **Visit your site:**
+   [https://calinortan.github.io/training-plan-visualizer/](https://calinortan.github.io/training-plan-visualizer/)
+
+#### Notes:
+
+- The `dist/` folder is **not** tracked by git (see `.gitignore`).
+- The deployment process pushes the build output to the `gh-pages` branch, not your main branch.
+- You can redeploy at any time by running `npm run deploy` again.
+- If you change your repo name or GitHub username, update the `homepage` field in `package.json` and the `base` in `vite.config.js`.
 
 ## Usage
 
@@ -75,14 +100,13 @@ This creates a `build` folder with the production-ready application.
 
 2. **Track Your Progress**:
 
-   - Click on any day to mark it as completed (green)
-   - Click again to unmark it
+   - Mark key workouts and long runs as completed
+   - Enter your actual weekly mileage; the tile is marked as completed when you meet or exceed the target
    - Today's date is highlighted with a blue border and pulsing animation
 
 3. **View Statistics**:
 
-   - Overall progress bar shows completion percentage
-   - Weekly cards show individual week progress
+   - See total/target mileage, completed mileage, and progress bars
    - Overview cards display key metrics
 
 4. **Data Persistence**:
@@ -94,34 +118,34 @@ This creates a `build` folder with the production-ready application.
    - Use the "Clear All Data" button to reset everything
    - This will remove both the training plan and all completion data
 
-## Features in Detail
+## Generating a Training Plan CSV with AI
 
-### Visual Indicators
+You can use an LLM (like ChatGPT or Gemini) to generate a compatible training plan CSV. Here’s a recommended prompt:
 
-- **Completed Days**: Green background
-- **Today**: Blue border with pulsing animation
-- **Completed Weeks**: Green left border and gradient background
-- **Phase Colors**: Different colors for different training phases
+```
+Generate a 14-week running training plan as a CSV for a half marathon. Each week should have the following columns:
+- Week (number)
+- Phase (Base, Specific, Taper, Race week, etc.)
+- Start (YYYY-MM-DD, Mondays only)
+- Long Run (km)
+- Key Workout (short description)
+- Weekly Mileage (km)
+- Long Run Pace (e.g., 5:10–5:30/km)
 
-### Responsive Design
+The plan should gradually increase mileage, include a variety of workouts, and have a taper and race week. Output only the CSV, no extra text.
+```
 
-- **Desktop**: Full layout with all statistics visible
-- **Tablet**: Adjusted grid layouts for medium screens
-- **Mobile**: Single-column layouts and touch-friendly interactions
-
-### Data Management
-
-- **Automatic Saving**: Changes are saved immediately
-- **Error Handling**: Graceful handling of invalid CSV files
-- **Data Validation**: Checks for required columns and date formats
+Paste the generated CSV into a file and upload it to the app!
 
 ## Technologies Used
 
-- **React 18**: Modern React with hooks
+- **React 18 + TypeScript**: Modern React with type safety
+- **Vite**: Fast build tool and dev server
 - **PapaParse**: CSV parsing library
 - **date-fns**: Date manipulation and formatting
 - **CSS3**: Modern styling with flexbox and grid
 - **Local Storage**: Browser-based data persistence
+- **gh-pages**: Easy deployment to GitHub Pages
 
 ## Browser Support
 

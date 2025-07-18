@@ -3,16 +3,28 @@ import Papa from "papaparse";
 import "./App.css";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { toDateSafe, getDaysInWeek, format } from "./utils/date";
-import UploadArea from "./components/UploadArea";
 import StatsOverview from "./components/StatsOverview";
 import TrainingPlan from "./components/TrainingPlan";
 import type { Week } from "./components/WeekCard";
+import PlanWizard from "./components/PlanWizard";
+import { PlanWizardAnswers } from "./components/PlanWizard";
+
+const LOCAL_KEY = "planWizardAnswers";
+
+const isAnswersComplete = (a: PlanWizardAnswers | null) => {
+  if (!a) return false;
+  return (
+    !!a.raceDistance &&
+    !!a.raceDate &&
+    !!a.currentMileage &&
+    !!a.longRun &&
+    !!a.experience &&
+    !!a.daysPerWeek
+  );
+};
 
 const App: React.FC = () => {
-  const [trainingPlan, setTrainingPlan] = useLocalStorage<Week[] | null>(
-    "trainingPlan",
-    null
-  );
+  const [trainingPlan, setTrainingPlanState] = useState<Week[] | null>(null);
   const [completedEvents, setCompletedEvents] = useLocalStorage<
     Record<string, boolean>
   >("completedEvents", {});
@@ -20,77 +32,52 @@ const App: React.FC = () => {
     Record<number, string>
   >("actualMileage", {});
   const [isDragging, setIsDragging] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleFileUpload = (file: File) => {
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results: Papa.ParseResult<any>) => {
-        if (results.errors.length > 0) {
-          alert("Error parsing CSV file. Please check the format.");
-          console.error("PapaParse errors:", results.errors);
-          return;
-        }
-        const requiredColumns = [
-          "Week",
-          "Phase",
-          "Start",
-          "Long Run (km)",
-          "Key Workout",
-          "Weekly Mileage (km)",
-          "Long Run Pace",
-        ];
-        const firstRow = results.data[0] || {};
-        const missing = requiredColumns.filter((col) => !(col in firstRow));
-        if (missing.length > 0) {
-          alert("Missing required columns: " + missing.join(", "));
-          return;
-        }
-        const parsedPlan: Week[] = results.data.map(
-          (row: any, index: number) => ({
-            ...row,
-            weekNumber: parseInt(row.Week) || index + 1,
-            startDate: toDateSafe(row.Start),
-            longRunKm: parseFloat(row["Long Run (km)"]) || 0,
-            weeklyMileage: parseFloat(row["Weekly Mileage (km)"]) || 0,
+  // Save plan to localStorage when set
+  const setTrainingPlan = (plan: Week[] | null) => {
+    setTrainingPlanState(plan);
+    if (plan) {
+      localStorage.setItem("trainingPlan", JSON.stringify(plan));
+    } else {
+      localStorage.removeItem("trainingPlan");
+    }
+  };
+
+  // On mount, load plan from localStorage if present
+  React.useEffect(() => {
+    const savedPlan = localStorage.getItem("trainingPlan");
+    if (savedPlan) {
+      setTrainingPlanState(JSON.parse(savedPlan));
+      return;
+    }
+    // Only auto-generate if no plan is present
+    const saved = localStorage.getItem(LOCAL_KEY);
+    if (saved) {
+      const answers: PlanWizardAnswers = JSON.parse(saved);
+      if (isAnswersComplete(answers)) {
+        setLoading(true);
+        setError(null);
+        fetch("/api/generate-plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(answers),
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error("Failed to generate plan");
+            return res.json();
           })
-        );
-        setTrainingPlan(parsedPlan);
-        setCompletedEvents({});
-        setActualMileage({});
-      },
-      error: (error: any) => {
-        alert("Error reading file: " + error.message);
-        console.error("PapaParse error:", error);
-      },
-    });
-  };
-
-  const handleFileInput = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      handleFileUpload(file);
+          .then((data) => {
+            setTrainingPlan(data);
+          })
+          .catch((err) => {
+            setError(err.message || "Unknown error");
+          })
+          .finally(() => setLoading(false));
+      }
     }
-  };
-
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(false);
-    const files = event.dataTransfer.files;
-    if (files.length > 0) {
-      handleFileUpload(files[0]);
-    }
-  };
+  }, []);
 
   const toggleEventCompletion = (eventKey: string) => {
     setCompletedEvents((prev) => ({
@@ -153,41 +140,44 @@ const App: React.FC = () => {
       )
     : 0;
 
-  const clearData = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to clear all data? This cannot be undone."
-      )
-    ) {
-      setTrainingPlan(null);
-      setCompletedEvents({});
-      setActualMileage({});
-      window.localStorage.removeItem("trainingPlan");
-      window.localStorage.removeItem("completedEvents");
-      window.localStorage.removeItem("actualMileage");
-    }
-  };
-
   const onMileageChange = (weekNumber: number, value: string) => {
     setActualMileage((prev) => ({ ...prev, [weekNumber]: value }));
   };
 
+  // Read event info from localStorage
+  let eventInfo: { raceDistance?: string; raceDate?: string } = {};
+  try {
+    const wizard = localStorage.getItem(LOCAL_KEY);
+    if (wizard) {
+      const parsed = JSON.parse(wizard);
+      eventInfo = {
+        raceDistance: parsed.raceDistance,
+        raceDate: parsed.raceDate,
+      };
+    }
+  } catch {}
+
   if (!trainingPlan) {
-    return (
-      <div className="container">
-        <div className="header">
-          <h1>🏃‍♂️ Training Plan Visualizer</h1>
-          <p>Upload your training plan CSV to start tracking your progress</p>
+    if (loading) {
+      return (
+        <div style={{ textAlign: "center", marginTop: 80 }}>
+          <div className="card">
+            <h2>Generating your plan...</h2>
+          </div>
         </div>
-        <UploadArea
-          onFileInput={handleFileInput}
-          isDragging={isDragging}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        />
-      </div>
-    );
+      );
+    }
+    if (error) {
+      return (
+        <div style={{ textAlign: "center", marginTop: 80 }}>
+          <div className="card">
+            <h2>Error</h2>
+            <p>{error}</p>
+          </div>
+        </div>
+      );
+    }
+    return <PlanWizard onPlanGenerated={setTrainingPlan} />;
   }
 
   return (
@@ -196,11 +186,33 @@ const App: React.FC = () => {
         <h1>🏃‍♂️ Training Plan Visualizer</h1>
         <p>Track your running progress week by week</p>
       </div>
+      {eventInfo.raceDistance && eventInfo.raceDate && (
+        <div
+          className="card"
+          style={{
+            marginBottom: 20,
+            background: "#e3f2fd",
+            borderLeft: "6px solid #667eea",
+            textAlign: "center",
+          }}
+        >
+          <h2 style={{ margin: 0, fontWeight: 700, fontSize: "1.3rem" }}>
+            Target Event: {eventInfo.raceDistance} on {eventInfo.raceDate}
+          </h2>
+        </div>
+      )}
       <div style={{ textAlign: "right", marginBottom: 16 }}>
         <button
           className="btn btn-secondary"
           style={{ marginBottom: 8 }}
-          onClick={clearData}
+          onClick={() => {
+            setTrainingPlan(null);
+            setCompletedEvents({});
+            setActualMileage({});
+            window.localStorage.removeItem("trainingPlan");
+            window.localStorage.removeItem("completedEvents");
+            window.localStorage.removeItem("actualMileage");
+          }}
         >
           Clear All Data
         </button>
