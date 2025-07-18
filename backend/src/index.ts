@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 const fetch = require("node-fetch");
 import { PlanWizardAnswers } from "./types/plan";
 import { generatePlan } from "./llm";
+import path from "path";
 
 dotenv.config();
 
@@ -25,6 +26,14 @@ app.post("/api/generate-plan", async (req, res) => {
   } catch (err: any) {
     res.status(500).json({ error: err.message || "Unknown error" });
   }
+});
+
+// Serve static files from the frontend build
+app.use(express.static(path.join(__dirname, "../../../dist")));
+
+// Fallback: serve index.html for any non-API route (SPA support)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../../../dist", "index.html"));
 });
 
 app.listen(PORT, () => {
