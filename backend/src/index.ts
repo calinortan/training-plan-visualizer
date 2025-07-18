@@ -29,11 +29,14 @@ app.post("/api/generate-plan", async (req, res) => {
 });
 
 // Serve static files from the frontend build
-app.use(express.static(path.join(__dirname, "../../../dist")));
+app.use(
+  "/training-plan-visualizer",
+  express.static(path.join(__dirname, "../../dist"))
+);
 
 // Fallback: serve index.html for any non-API route (SPA support)
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../../../dist", "index.html"));
+app.get("/training-plan-visualizer/{*any}", (req, res) => {
+  res.sendFile(path.join(__dirname, "../../dist", "index.html"));
 });
 
 app.listen(PORT, () => {
